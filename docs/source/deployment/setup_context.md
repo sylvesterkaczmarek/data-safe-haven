@@ -11,10 +11,12 @@ The context **must** be setup before any TRE components can be deployed.
 
 ## Configuration
 
-A local context configuration file (`context.yaml`) holds the information necessary to find and access a context.
+A local context configuration file (`contexts.yaml`) holds the information necessary to find and access a context.
+By default, Data Safe Haven stores this file in its platform-specific user configuration directory.
 
 :::{note}
-You can specify the directory where your context configuration (`context.yaml`) is stored by setting the environment variable `DSH_CONFIG_DIRECTORY`.
+You can specify a different directory for your context configuration by setting the environment variable `DSH_CONFIG_DIRECTORY`.
+For example, setting `DSH_CONFIG_DIRECTORY=/path/to/config` stores the file at `/path/to/config/contexts.yaml`.
 :::
 
 ## Creating a context
