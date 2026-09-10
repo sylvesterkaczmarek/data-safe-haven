@@ -3,9 +3,7 @@ from data_safe_haven.config import ContextManager, DSHPulumiConfig
 from data_safe_haven.external import AzureSdk
 
 
-def test_available_before_first_sre_deployment(
-    context_manager, mocker, runner
-):
+def test_available_before_first_sre_deployment(context_manager, mocker, runner):
     mocker.patch.object(ContextManager, "from_file", return_value=context_manager)
     mocker.patch.object(AzureSdk, "list_blobs", return_value=["sre-sandbox.yaml"])
     mocker.patch.object(DSHPulumiConfig, "remote_exists", return_value=False)
