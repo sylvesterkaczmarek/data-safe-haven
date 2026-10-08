@@ -113,6 +113,14 @@ user_services:
 
 ### Configuration guidance
 
+#### Choosing SRE names
+
+Choose distinctive SRE names, especially when deploying multiple SREs from the same SHM. Azure Storage Account names must be globally unique, including across subscriptions. Data Safe Haven shortens the SHM and SRE name tokens when generating the desired-state storage account name to fit Azure's 24-character limit. Consequently, two different SRE names can generate the same storage account name.
+
+For example, with an SHM named `pro`, SRE names `dsg1234` and `dsg9876` both produce `shprosredsgdesiredstate6`. Deploying the second environment then fails with `StorageAccountAlreadyTaken`, even when the SREs are in different Azure subscriptions.
+
+To avoid this, use names that differ near the beginning (such as `alpha234` and `beta987`), rather than names that share a prefix and differ only in their trailing digits. Check the names of existing SREs in the same SHM before deploying another one. For a new SRE affected by a collision, choose a more distinct name in the SRE configuration and upload it before deployment. Changing the name of an existing deployed SRE can replace resources and requires a separate migration plan.
+
 #### Choosing an Azure region
 
 Some of the SRE resources are not available in all Azure regions.
