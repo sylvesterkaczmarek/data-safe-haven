@@ -5,7 +5,7 @@ class TestDeploySHM:
     def test_infrastructure_deploy(
         self,
         runner,
-        mock_imperative_shm_deploy_then_exit,  # noqa: ARG002
+        mock_imperative_shm_deploy_then_exit,
         mock_graph_api_add_custom_domain,  # noqa: ARG002
         mock_shm_config_from_remote,  # noqa: ARG002
         mock_shm_config_remote_exists,  # noqa: ARG002
@@ -13,7 +13,7 @@ class TestDeploySHM:
     ):
         result = runner.invoke(shm_command_group, ["deploy"])
         assert result.exit_code == 1
-        assert "mock deploy" in result.stdout
+        mock_imperative_shm_deploy_then_exit.assert_called_once()
         assert "mock deploy error" in result.stdout
 
     def test_infrastructure_no_context_file(self, runner_no_context_file):
@@ -41,13 +41,13 @@ class TestTeardownSHM:
     def test_teardown(
         self,
         runner,
-        mock_imperative_shm_teardown_then_exit,  # noqa: ARG002
+        mock_imperative_shm_teardown_then_exit,
         mock_shm_config_from_remote,  # noqa: ARG002
         mock_shm_config_remote_exists,  # noqa: ARG002
     ):
         result = runner.invoke(shm_command_group, ["teardown"], input="y")
         assert result.exit_code == 1
-        assert "mock teardown" in result.stdout
+        mock_imperative_shm_teardown_then_exit.assert_called_once()
 
     def test_no_context_file(self, runner_no_context_file):
         result = runner_no_context_file.invoke(shm_command_group, ["teardown"])
@@ -102,9 +102,9 @@ class TestTeardownSHM:
         mock_azuresdk_get_subscription_name,  # noqa: ARG002
         mock_pulumi_config_from_remote_fails,  # noqa: ARG002
         mock_shm_config_from_remote,  # noqa: ARG002
-        mock_imperative_shm_teardown_then_exit,  # noqa: ARG002
+        mock_imperative_shm_teardown_then_exit,
         mock_shm_config_remote_exists,  # noqa: ARG002
     ):
         result = runner.invoke(shm_command_group, ["teardown"], input="y")
         assert result.exit_code == 1
-        assert "mock teardown" in result.stdout
+        mock_imperative_shm_teardown_then_exit.assert_called_once()
