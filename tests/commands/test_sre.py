@@ -190,7 +190,7 @@ class TestTeardownSRE:
         mock_ip_1_2_3_4,  # noqa: ARG002
         mock_pulumi_config_from_remote,  # noqa: ARG002
         mock_sre_config_from_remote,  # noqa: ARG002
-        mock_sre_project_manager_teardown_then_exit,
+        mock_sre_project_manager_teardown_then_exit,  # noqa: ARG002
     ) -> None:
         result = runner.invoke(sre_command_group, ["teardown", "sandbox"], input="n")
         assert result.exit_code == 0
