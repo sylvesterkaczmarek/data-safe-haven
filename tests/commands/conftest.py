@@ -66,7 +66,7 @@ def mock_imperative_shm_deploy_then_exit(mocker):
         msg = "mock deploy error"
         raise DataSafeHavenAzureAPIAuthenticationError(msg)
 
-    mocker.patch.object(
+    return mocker.patch.object(
         ImperativeSHM,
         "deploy",
         side_effect=create_then_exit,
@@ -80,7 +80,7 @@ def mock_imperative_shm_teardown_then_exit(mocker):
         msg = "mock teardown error"
         raise DataSafeHavenAzureAPIAuthenticationError(msg)
 
-    mocker.patch.object(
+    return mocker.patch.object(
         ImperativeSHM,
         "teardown",
         side_effect=teardown_then_exit,
@@ -178,7 +178,7 @@ def mock_sre_project_manager_deploy_then_exit(mocker):
         msg = "mock deploy error"
         raise DataSafeHavenAzureAPIAuthenticationError(msg)
 
-    mocker.patch.object(
+    return mocker.patch.object(
         SREProjectManager,
         "deploy",
         side_effect=create_then_exit,
@@ -192,7 +192,7 @@ def mock_sre_project_manager_teardown_then_exit(mocker):
         msg = "mock teardown error"
         raise DataSafeHavenAzureAPIAuthenticationError(msg)
 
-    mocker.patch.object(
+    return mocker.patch.object(
         SREProjectManager,
         "teardown",
         side_effect=teardown_then_exit,
