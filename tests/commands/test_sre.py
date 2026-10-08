@@ -20,11 +20,11 @@ class TestDeploySRE:
         mock_shm_config_from_remote,  # noqa: ARG002
         mock_sre_config_from_remote,  # noqa: ARG002
         mock_graph_api_get_application_by_name,  # noqa: ARG002
-        mock_sre_project_manager_deploy_then_exit,  # noqa: ARG002
+        mock_sre_project_manager_deploy_then_exit,
     ) -> None:
         result = runner.invoke(sre_command_group, ["deploy", "sandbox"])
         assert result.exit_code == 1
-        assert "mock deploy" in result.stdout
+        mock_sre_project_manager_deploy_then_exit.assert_called_once()
         assert "mock deploy error" in result.stdout
 
     def test_deploy_cli_full(
@@ -150,11 +150,11 @@ class TestTeardownSRE:
         mock_ip_1_2_3_4,  # noqa: ARG002
         mock_pulumi_config_from_remote,  # noqa: ARG002
         mock_sre_config_from_remote,  # noqa: ARG002
-        mock_sre_project_manager_teardown_then_exit,  # noqa: ARG002
+        mock_sre_project_manager_teardown_then_exit,
     ) -> None:
         result = runner.invoke(sre_command_group, ["teardown", "sandbox"], input="y")
         assert result.exit_code == 1
-        assert "mock teardown" in result.stdout
+        mock_sre_project_manager_teardown_then_exit.assert_called_once()
 
     def test_no_context_file(self, runner_no_context_file) -> None:
         result = runner_no_context_file.invoke(
@@ -190,7 +190,7 @@ class TestTeardownSRE:
         mock_ip_1_2_3_4,  # noqa: ARG002
         mock_pulumi_config_from_remote,  # noqa: ARG002
         mock_sre_config_from_remote,  # noqa: ARG002
-        mock_sre_project_manager_teardown_then_exit,  # noqa: ARG002
+        mock_sre_project_manager_teardown_then_exit,
     ) -> None:
         result = runner.invoke(sre_command_group, ["teardown", "sandbox"], input="n")
         assert result.exit_code == 0
