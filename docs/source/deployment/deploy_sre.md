@@ -111,6 +111,34 @@ user_services:
 
 ::::
 
+### Avoiding desired-state storage account name collisions
+
+Azure Storage account names are **globally unique**, lowercase and limited
+to 3–24 alphanumeric characters. By default, DSH derives the desired-state
+account name by truncating tokens in the full SHM/SRE stack name and
+appending a fixed desired-state suffix. Similar SRE names, for example
+dsg1234 and dsg9876, can therefore produce the **same** short account name,
+especially when they share a long SHM prefix (issue #2370).
+
+For a **new** SRE that would collide, specify a globally unique, explicit
+name under the SRE configuration section, for example:
+
+:::{code} yaml
+sre:
+  desired_state_storage_account_name: shmprod5dsg1234ds
+:::
+
+For the second SRE, choose a different name such as
+shmprod5dsg9876ds. The option applies only to the NFSv3 desired-state
+storage account; all other SRE storage accounts retain their normal names.
+Azure will still reject any name already registered anywhere in Azure.
+
+**Important:** Omitting the field retains the old generated account name,
+so existing deployments remain compatible. Set this override **before**
+initial deployment. Changing it for an existing deployed SRE renames a
+physical storage account and may cause replacement or data loss; do not
+change it on a live environment without a migration and recovery plan.
+
 ### Configuration guidance
 
 #### Choosing an Azure region

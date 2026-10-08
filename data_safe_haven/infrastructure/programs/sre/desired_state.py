@@ -40,6 +40,21 @@ from data_safe_haven.resources import resources_path
 from data_safe_haven.types import AzureDnsZoneNames
 
 
+def desired_state_storage_account_name(
+    stack_name: str, component_name: str, override: str | None = None
+) -> str:
+    """Return the legacy name unless a globally unique override was supplied.
+
+    Older SREs must not silently replace their storage account on a CLI update.
+    """
+    if override is not None:
+        return override
+    return alphanumeric(
+        f"{''.join(truncate_tokens(stack_name.split('-'), 11))}"
+        f"desiredstate{sha256hash(component_name)}"
+    )[:24]
+
+
 class SREDesiredStateProps:
     """Properties for SREDesiredStateComponent"""
 
@@ -64,6 +79,7 @@ class SREDesiredStateProps:
         software_repository_hostname: Input[str],
         subscription_name: Input[str],
         subnet_desired_state: Input[network.GetSubnetResult],
+        desired_state_storage_account_name: str | None = None,
     ) -> None:
         self.admin_ip_addresses = admin_ip_addresses
         self.allow_workspace_internet = allow_workspace_internet
@@ -85,6 +101,7 @@ class SREDesiredStateProps:
             get_name_from_rg
         )
         self.software_repository_hostname = software_repository_hostname
+        self.desired_state_storage_account_name = desired_state_storage_account_name
         self.subnet_desired_state_id = Output.from_input(subnet_desired_state).apply(
             get_id_from_subnet
         )
@@ -112,9 +129,9 @@ class SREDesiredStateComponent(ComponentResource):
         storage_component = NFSV3StorageAccountComponent(
             f"{self._name}_storage_account",
             NFSV3StorageAccountProps(
-                account_name=alphanumeric(
-                    f"{''.join(truncate_tokens(stack_name.split('-'), 11))}desiredstate{sha256hash(self._name)}"
-                )[:24],
+                account_name=desired_state_storage_account_name(
+                    stack_name, self._name, props.desired_state_storage_account_name
+                ),
                 allowed_ip_addresses=props.admin_ip_addresses,
                 location=props.location,
                 log_analytics_workspace=props.log_analytics_workspace,

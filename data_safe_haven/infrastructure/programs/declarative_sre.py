@@ -443,6 +443,9 @@ class DeclarativeSRE:
                     else ""
                 ),
                 subnet_desired_state=networking.subnet_desired_state,
+                desired_state_storage_account_name=(
+                    self.config.sre.desired_state_storage_account_name
+                ),
                 subscription_name=sre_subscription_name,
             ),
         )

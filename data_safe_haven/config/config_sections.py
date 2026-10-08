@@ -5,7 +5,14 @@ from __future__ import annotations
 from ipaddress import ip_network
 from itertools import combinations
 
-from pydantic import BaseModel, HttpUrl, PositiveInt, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    HttpUrl,
+    PositiveInt,
+    field_validator,
+    model_validator,
+)
 
 from data_safe_haven.config import LOGGING_LEVEL_VALIDATE, LOGGING_LEVELS
 from data_safe_haven.types import (
@@ -143,6 +150,13 @@ class ConfigSectionSRE(BaseModel, validate_assignment=True):
     allow_workspace_internet: bool = False
     databases: UniqueList[DatabaseSystem] = []
     data_provider_ip_addresses: list[IpAddress] = []
+    # Optional escape hatch for Azure's globally unique storage-account names.
+    # Omission retains existing deployments' physical resource names.
+    desired_state_storage_account_name: str | None = Field(
+        default=None,
+        pattern=r"^[a-z0-9]{3,24}$",
+        exclude_if=lambda value: value is None,
+    )
     monitoring: ConfigSectionMonitoring = ConfigSectionMonitoring()
     remote_desktop: ConfigSubsectionRemoteDesktopOpts
     research_user_ip_addresses: list[IpAddress] | AzureServiceTag = []
