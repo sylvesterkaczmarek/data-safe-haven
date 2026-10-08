@@ -177,3 +177,26 @@ When you are connected to a workspace, you may switch to another by bringing up 
 :::{tip}
 Any files in the **/mnt/output/**, **/home/** or **/mnt/shared** folders on other workspaces will be available in this workspace too.
 :::
+
+::::{caution} Close Firefox before switching workspaces
+
+Your **home directory, including the Firefox Snap profile, is shared**
+between workspace VMs. Leaving Firefox running in Workspace 1 and opening
+Firefox in Workspace 2 can cause profile-lock errors, delayed startup and
+browser crashes (issue #2621).
+
+Before switching to another workspace:
+
+1. Save your browser work and **quit Firefox completely** on the current VM.
+1. Log out of the remote desktop session, rather than just disconnecting the
+   Guacamole tab. Then select the next workspace and launch Firefox there.
+
+If Firefox fails to start because a profile is in use, first return to the
+old VM and close Firefox there. Do **not** delete the shared Firefox profile
+or remove lock files while Firefox could still be running on another VM:
+the profile can contain bookmarks and other personal data.
+
+If the old VM has been removed or cannot be reached, contact your SRE
+administrator before changing the profile. See
+[Firefox troubleshooting](troubleshooting.md) for related startup errors.
+::::
