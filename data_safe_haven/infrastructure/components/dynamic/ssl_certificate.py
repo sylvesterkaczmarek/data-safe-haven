@@ -5,6 +5,7 @@ from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from typing import Any, override
 
+from acme import messages
 from acme.errors import ValidationError
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
 from cryptography.hazmat.primitives.serialization import (
@@ -45,53 +46,82 @@ class SSLCertificateProps:
 
 
 class SSLCertificateProvider(DshResourceProvider):
+    @staticmethod
+    def _request_certificate_with_account_recovery(
+        props: dict[str, Any],
+    ) -> tuple[bytes, bytes, AzureSdk]:
+        """Retry a stale ACME account once, with a fresh registration and DNS challenge.
+
+        A failed order can leave Azure DNS challenges behind, so the retry
+        repeats the entire challenge flow instead of reusing an invalid order.
+        """
+        for attempt in range(2):
+            try:
+                client = ACMEClient(
+                    domains=[props["domain_name"]],
+                    email=props["admin_email_address"],
+                    directory="https://acme-v02.api.letsencrypt.org/directory",
+                    nameservers=["8.8.8.8", "1.1.1.1"],
+                    new_account=True,
+                )
+                # Azure Key Vault requires an RSA key when importing the PFX.
+                private_key_bytes = client.generate_private_key(key_type="rsa2048")
+                client.generate_csr()
+
+                verification_tokens = list(client.request_verification_tokens().items())
+                if not verification_tokens:
+                    msg = "ACME did not return any DNS verification tokens."
+                    raise DataSafeHavenSSLError(msg)
+
+                azure_sdk = AzureSdk(props["subscription_name"], disable_logging=True)
+                for record_name, record_values in verification_tokens:
+                    record_set = azure_sdk.ensure_dns_txt_record(
+                        record_name=record_name.replace(f".{props['domain_name']}", ""),
+                        record_value=record_values[0],
+                        resource_group_name=props["networking_resource_group_name"],
+                        zone_name=props["domain_name"],
+                    )
+                if not client.check_dns_propagation(
+                    authoritative=False, round_robin=True, verbose=False
+                ):
+                    msg = "DNS propagation failed"
+                    raise DataSafeHavenSSLError(msg)
+                time.sleep(record_set.ttl or 30)
+                try:
+                    certificate_bytes = client.request_certificate()
+                except ValidationError as exc:
+                    msg = "\n".join(
+                        ["ACME validation error:"]
+                        + [str(error) for error in exc.failed_authzrs]
+                        + [
+                            f"TXT record {name} is currently set to {values}"
+                            for (name, values) in verification_tokens
+                        ]
+                    )
+                    raise DataSafeHavenSSLError(msg) from exc
+                return private_key_bytes, certificate_bytes, azure_sdk
+            except messages.Error as exc:
+                if (
+                    exc.typ == "urn:ietf:params:acme:error:accountDoesNotExist"
+                    and attempt == 0
+                ):
+                    # A fresh registration also generates a new ACME account key.
+                    continue
+                if exc.typ == "urn:ietf:params:acme:error:accountDoesNotExist":
+                    msg = "ACME account registration failed again after one retry."
+                    raise DataSafeHavenSSLError(msg) from exc
+                raise
+
+        msg = "Unable to issue an ACME certificate."
+        raise DataSafeHavenSSLError(msg)
+
     @override
     def create(self, props: dict[str, Any]) -> CreateResult:
         outs = dict(**props)
         try:
-            client = ACMEClient(
-                domains=[props["domain_name"]],
-                email=props["admin_email_address"],
-                directory="https://acme-v02.api.letsencrypt.org/directory",
-                nameservers=["8.8.8.8", "1.1.1.1"],
-                new_account=True,
+            private_key_bytes, certificate_bytes, azure_sdk = (
+                self._request_certificate_with_account_recovery(props)
             )
-            # Generate private key and CSR
-            # Note that we must set the key to RSA-2048 before generating the CSR
-            # The default is ecdsa-with-SHA25, which Azure Key Vault cannot read
-            private_key_bytes = client.generate_private_key(key_type="rsa2048")
-            client.generate_csr()
-            # Request DNS verification tokens and add them to the DNS record
-            verification_tokens = client.request_verification_tokens().items()
-            azure_sdk = AzureSdk(props["subscription_name"], disable_logging=True)
-            for record_name, record_values in verification_tokens:
-                record_set = azure_sdk.ensure_dns_txt_record(
-                    record_name=record_name.replace(f".{props['domain_name']}", ""),
-                    record_value=record_values[0],
-                    resource_group_name=props["networking_resource_group_name"],
-                    zone_name=props["domain_name"],
-                )
-            # Wait for DNS propagation to complete
-            if not client.check_dns_propagation(
-                authoritative=False, round_robin=True, verbose=False
-            ):
-                msg = "DNS propagation failed"
-                raise DataSafeHavenSSLError(msg)
-            # Wait for the TTL for this record to expire to remove risk of caching
-            time.sleep(record_set.ttl or 30)
-            # Request a signed certificate
-            try:
-                certificate_bytes = client.request_certificate()
-            except ValidationError as exc:
-                msg = "\n".join(
-                    ["ACME validation error:"]
-                    + [str(auth_error) for auth_error in exc.failed_authzrs]
-                    + [
-                        f"TXT record {record_name} is currently set to {record_values}"
-                        for (record_name, record_values) in verification_tokens
-                    ]
-                )
-                raise DataSafeHavenSSLError(msg) from exc
             # Although KeyVault will accept a PEM certificate (where we simply prepend
             # the private key) we need a PFX certificate for compatibility with
             # ApplicationGateway
