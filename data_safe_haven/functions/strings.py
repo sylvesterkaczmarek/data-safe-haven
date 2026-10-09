@@ -109,6 +109,23 @@ def sha256hash(input_string: str) -> str:
     return hashlib.sha256(input_string.encode("utf-8")).hexdigest()
 
 
+def unique_storage_account_name(stack_name: str, purpose: str) -> str:
+    """Return an Azure storage name unique to the full stack name and purpose.
+
+    Account names are global and can only contain 3-24 lowercase ASCII
+    alphanumeric characters. A suffix hash must come *before* truncation;
+    truncating a shared, fixed hash suffix created collisions between SREs.
+    """
+    valid = string.ascii_lowercase + string.digits
+    stack_prefix = "".join(char for char in stack_name.lower() if char in valid)[:8]
+    purpose_prefix = "".join(char for char in purpose.lower() if char in valid)[:4]
+    if not stack_prefix or not purpose_prefix:
+        message = "Storage account stack name and purpose must not be empty."
+        raise ValueError(message)
+    fingerprint = sha256hash(f"{stack_name}:{purpose}")[:12]
+    return f"{stack_prefix}{purpose_prefix}{fingerprint}"
+
+
 def truncate_tokens(tokens: Sequence[str], max_length: int) -> list[str]:
     """
     Recursively remove the final character from the longest strings in the input.

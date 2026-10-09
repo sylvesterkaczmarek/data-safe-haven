@@ -20,10 +20,8 @@ from pulumi_azure_native import (
 )
 
 from data_safe_haven.functions import (
-    alphanumeric,
     replace_separators,
-    sha256hash,
-    truncate_tokens,
+    unique_storage_account_name,
 )
 from data_safe_haven.infrastructure.common import (
     get_id_from_rg,
@@ -112,9 +110,7 @@ class SREDesiredStateComponent(ComponentResource):
         storage_component = NFSV3StorageAccountComponent(
             f"{self._name}_storage_account",
             NFSV3StorageAccountProps(
-                account_name=alphanumeric(
-                    f"{''.join(truncate_tokens(stack_name.split('-'), 11))}desiredstate{sha256hash(self._name)}"
-                )[:24],
+                account_name=unique_storage_account_name(stack_name, "desiredstate"),
                 allowed_ip_addresses=props.admin_ip_addresses,
                 location=props.location,
                 log_analytics_workspace=props.log_analytics_workspace,

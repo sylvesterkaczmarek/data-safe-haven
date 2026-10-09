@@ -9,6 +9,7 @@ from .strings import (
     seeded_uuid,
     sha256hash,
     truncate_tokens,
+    unique_storage_account_name,
 )
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "seeded_uuid",
     "sha256hash",
     "truncate_tokens",
+    "unique_storage_account_name",
 ]

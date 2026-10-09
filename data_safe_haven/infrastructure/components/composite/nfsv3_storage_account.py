@@ -84,7 +84,11 @@ class NFSV3StorageAccountComponent(ComponentResource):
             public_network_access=storage.PublicNetworkAccess.ENABLED,
             resource_group_name=props.resource_group_name,
             sku=storage.SkuArgs(name=storage.SkuName.PREMIUM_ZRS),
-            opts=child_opts,
+            # Retain existing Azure names when upgrading deployed SRE stacks;
+            # new SREs use collision-resistant names from the caller.
+            opts=ResourceOptions.merge(
+                child_opts, ResourceOptions(ignore_changes=["account_name"])
+            ),
             tags=child_tags,
         )
 
