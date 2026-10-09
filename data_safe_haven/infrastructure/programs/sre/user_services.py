@@ -65,6 +65,8 @@ class SREUserServicesProps:
         subnet_software_repositories: Input[network.GetSubnetResult] | None,
         subnet_software_repositories_support: Input[network.GetSubnetResult] | None,
         db_server_shared_username: Input[str] | None = None,
+        *,
+        postgresql_logs_enabled: bool = False,
     ) -> None:
         self.database_service_admin_password = database_service_admin_password
         self.databases = databases
@@ -80,6 +82,7 @@ class SREUserServicesProps:
         self.ldap_user_search_base = ldap_user_search_base
         self.location = location
         self.log_analytics_workspace = log_analytics_workspace
+        self.postgresql_logs_enabled = postgresql_logs_enabled
         self.nexus_admin_password = Output.secret(nexus_admin_password)
         self.repository_data = repository_data
         self.resource_group_name = resource_group_name
@@ -147,6 +150,8 @@ class SREUserServicesComponent(ComponentResource):
                 database_password=props.db_server_shared_password,
                 database_resource_group_name=props.resource_group_name,
                 database_server_name=f"{stack_name}-db-server-shared",
+                log_analytics_workspace_id=props.log_analytics_workspace.workspace.id,
+                postgresql_logs_enabled=props.postgresql_logs_enabled,
                 database_subnet_id=props.subnet_containers_support_id,
                 database_username=props.db_server_shared_username,
                 disable_secure_transport=False,
@@ -262,6 +267,7 @@ class SREUserServicesComponent(ComponentResource):
                     resource_group_name=props.resource_group_name,
                     sre_fqdn=props.sre_fqdn,
                     software_packages=props.software_packages,
+                    postgresql_logs_enabled=props.postgresql_logs_enabled,
                     nexus_persistent_quota_gb=props.nexus_persistent_quota_gb,
                     storage_account_key=props.storage_account_key,
                     storage_account_name=props.storage_account_name,
@@ -285,6 +291,8 @@ class SREUserServicesComponent(ComponentResource):
                     resource_group_name=props.resource_group_name,
                     sre_fqdn=props.sre_fqdn,
                     subnet_id=props.subnet_databases_id,
+                    log_analytics_workspace_id=props.log_analytics_workspace.workspace.id,
+                    postgresql_logs_enabled=props.postgresql_logs_enabled,
                 ),
                 opts=child_opts,
                 tags=child_tags,

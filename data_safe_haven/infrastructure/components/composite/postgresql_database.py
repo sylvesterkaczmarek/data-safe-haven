@@ -1,7 +1,7 @@
 from collections.abc import Mapping, Sequence
 
 from pulumi import ComponentResource, Input, Output, ResourceOptions
-from pulumi_azure_native import dbforpostgresql, network
+from pulumi_azure_native import dbforpostgresql, monitor, network
 
 from data_safe_haven.infrastructure.common import get_ip_addresses_from_private_endpoint
 from data_safe_haven.types import PostgreSqlExtension
@@ -22,6 +22,8 @@ class PostgresqlDatabaseProps:
         disable_secure_transport: bool,
         location: Input[str],
         azure_extensions: Input[PostgreSqlExtension] | None = None,
+        log_analytics_workspace_id: Input[str] | None = None,
+        postgresql_logs_enabled: bool = False,
     ) -> None:
         self.azure_extensions = azure_extensions
         self.database_names = Output.from_input(database_names)
@@ -32,6 +34,11 @@ class PostgresqlDatabaseProps:
         self.database_username = database_username
         self.disable_secure_transport = disable_secure_transport
         self.location = location
+        self.log_analytics_workspace_id = log_analytics_workspace_id
+        self.postgresql_logs_enabled = postgresql_logs_enabled
+        if postgresql_logs_enabled and log_analytics_workspace_id is None:
+            msg = "A Log Analytics workspace ID is required for PostgreSQL server logs."
+            raise ValueError(msg)
 
 
 class PostgresqlDatabaseComponent(ComponentResource):
@@ -84,6 +91,26 @@ class PostgresqlDatabaseComponent(ComponentResource):
             opts=child_opts,
             tags=child_tags,
         )
+        # Forward PostgreSQL server logs without enabling verbose SQL statement logs.
+        self.diagnostic_setting: monitor.DiagnosticSetting | None = None
+        if props.postgresql_logs_enabled:
+            self.diagnostic_setting = monitor.DiagnosticSetting(
+                f"{self._name}_postgresql_logs",
+                name="postgresql-server-logs",
+                resource_uri=db_server.id,
+                workspace_id=props.log_analytics_workspace_id,
+                log_analytics_destination_type="Dedicated",
+                logs=[
+                    monitor.LogSettingsArgs(
+                        category="PostgreSQLLogs",
+                        enabled=True,
+                    )
+                ],
+                opts=ResourceOptions.merge(
+                    child_opts, ResourceOptions(parent=db_server)
+                ),
+            )
+
         # Configure require_secure_transport
         if props.disable_secure_transport:
             dbforpostgresql.Configuration(

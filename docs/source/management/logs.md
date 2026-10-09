@@ -72,6 +72,31 @@ There are two tables,
 : Various metrics on file share utilisation and performance.
 : This table is not reserved for the configuration data shares and other resources may log to it.
 
+## PostgreSQL server logs
+
+PostgreSQL Flexible Servers deployed for user services, the remote desktop
+gateway, package repositories and user-selected PostgreSQL databases can send
+server logs to the SRE's Log Analytics Workspace.
+
+This is **disabled by default** because server logs may include sensitive
+information and incur Log Analytics ingestion and retention costs. To enable
+it, set `sre.monitoring.postgresql_logs_enabled: true` in the SRE
+configuration, upload it and redeploy the SRE. This creates a diagnostic
+setting for each PostgreSQL Flexible Server using the `PostgreSQLLogs`
+category and the resource-specific `PGSQLServerLogs` table.
+
+Example query in the SRE Log Analytics Workspace:
+
+```kusto
+PGSQLServerLogs
+| where TimeGenerated > ago(24h)
+| project TimeGenerated, LogicalServerName, Message
+| order by TimeGenerated desc
+```
+
+This forwards existing PostgreSQL server logs. It does not enable verbose
+SQL statement logging, slow-query capture or query-store text collection.
+
 ## Container logs
 
 Some of the Data Safe Haven infrastructure is provisioned as containers.

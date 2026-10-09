@@ -636,6 +636,7 @@ def sre_config_yaml(request: FixtureRequest) -> str:
         databases: []
         monitoring:
             log_level: debug
+            postgresql_logs_enabled: false
             retention_period: 30
             sampling_interval: 60
         remote_desktop:

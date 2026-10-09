@@ -51,6 +51,8 @@ class SRERemoteDesktopProps:
         user_group_name: Input[str],
         log_level: Input[str],
         database_username: Input[str] | None = "postgresadmin",
+        *,
+        postgresql_logs_enabled: bool = False,
     ) -> None:
         self.admin_group_name = admin_group_name
         self.database_password = database_password
@@ -72,6 +74,7 @@ class SRERemoteDesktopProps:
         self.ldap_user_search_base = ldap_user_search_base
         self.location = location
         self.log_analytics_workspace = log_analytics_workspace
+        self.postgresql_logs_enabled = postgresql_logs_enabled
         self.resource_group_name = resource_group_name
         self.storage_account_key = storage_account_key
         self.storage_account_name = storage_account_name
@@ -159,6 +162,8 @@ class SRERemoteDesktopComponent(ComponentResource):
                 database_password=props.database_password,
                 database_resource_group_name=props.resource_group_name,
                 database_server_name=f"{stack_name}-db-server-guacamole",
+                log_analytics_workspace_id=props.log_analytics_workspace.workspace.id,
+                postgresql_logs_enabled=props.postgresql_logs_enabled,
                 database_subnet_id=props.subnet_guacamole_containers_support_id,
                 database_username=props.database_username,
                 disable_secure_transport=False,

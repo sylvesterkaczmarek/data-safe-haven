@@ -61,6 +61,8 @@ class SRESoftwareRepositoriesProps:
         subnet_software_repositories_support: Input[network.Subnet] | None,
         log_level: Input[str],
         database_username: Input[str] | None = "postgresadmin",
+        *,
+        postgresql_logs_enabled: bool = False,
     ) -> None:
         self.database_password = database_password
         self.database_username = (
@@ -70,6 +72,7 @@ class SRESoftwareRepositoriesProps:
         self.dockerhub_credentials = dockerhub_credentials
         self.location = location
         self.log_analytics_workspace = log_analytics_workspace
+        self.postgresql_logs_enabled = postgresql_logs_enabled
         self.nexus_admin_password = Output.secret(nexus_admin_password)
         self.nexus_packages: str | None = {
             SoftwarePackageCategory.ANY: "all",
@@ -419,6 +422,8 @@ class SRESoftwareRepositoriesComponent(ComponentResource):
                         database_password=props.database_password,
                         database_resource_group_name=props.resource_group_name,
                         database_server_name=f"{stack_name}-db-server-software-repositories",
+                        log_analytics_workspace_id=props.log_analytics_workspace.workspace.id,
+                        postgresql_logs_enabled=props.postgresql_logs_enabled,
                         database_subnet_id=props.subnet_software_repositories_support.id,
                         database_username=props.database_username,
                         disable_secure_transport=False,

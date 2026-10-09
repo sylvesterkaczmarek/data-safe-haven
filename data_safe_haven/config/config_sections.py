@@ -50,6 +50,7 @@ class ConfigSectionSHM(BaseModel, validate_assignment=True):
 
 class ConfigSectionMonitoring(BaseModel, validate_assignment=True):
     log_level: SafeLogLevelString = "debug"
+    postgresql_logs_enabled: bool = False
     retention_period: PositiveInt = 30
     sampling_interval: PositiveInt = 60
 

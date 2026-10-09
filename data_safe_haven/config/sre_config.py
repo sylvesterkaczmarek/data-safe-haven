@@ -113,6 +113,7 @@ class SREConfig(AzureSerialisableModel):
                 ],
                 monitoring=ConfigSectionMonitoring.model_construct(
                     log_level="Maximum granularity of logs to capture [error, warn, info, debug (default), trace]. Append optional service=level pairs [default, gitea_mirror, gitea, hedgedoc, identity, syslog, guacamole, nexus] separated by semicolons",
+                    postgresql_logs_enabled="True/False: forward PostgreSQL server logs to the SRE Log Analytics Workspace [default: false]",  # type: ignore
                     retention_period="Length of time to store logs and monitoring data in days [default: 30, minimum: 30, maximum: 730]",  # type: ignore
                     sampling_interval="Interval between collecting performance metrics in seconds [default: 60, minimum: 1]",  # type: ignore
                 ),

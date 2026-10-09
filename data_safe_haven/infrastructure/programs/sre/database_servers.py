@@ -24,6 +24,9 @@ class SREDatabaseServerProps:
         resource_group_name: Input[str],
         sre_fqdn: Input[str],
         subnet_id: Input[str],
+        log_analytics_workspace_id: Input[str] | None = None,
+        *,
+        postgresql_logs_enabled: bool = False,
     ) -> None:
         self.database_password = database_password
         self.database_system = database_system
@@ -32,6 +35,8 @@ class SREDatabaseServerProps:
         self.resource_group_name = resource_group_name
         self.sre_fqdn = sre_fqdn
         self.subnet_id = subnet_id
+        self.log_analytics_workspace_id = log_analytics_workspace_id
+        self.postgresql_logs_enabled = postgresql_logs_enabled
 
 
 class SREDatabaseServerComponent(ComponentResource):
@@ -88,6 +93,8 @@ class SREDatabaseServerComponent(ComponentResource):
                     database_password=props.database_password,
                     database_resource_group_name=props.resource_group_name,
                     database_server_name=f"{stack_name}-db-server-postgresql",
+                    log_analytics_workspace_id=props.log_analytics_workspace_id,
+                    postgresql_logs_enabled=props.postgresql_logs_enabled,
                     database_subnet_id=props.subnet_id,
                     database_username=props.database_username,
                     disable_secure_transport=True,
