@@ -267,6 +267,9 @@ class DeclarativeSRE:
                 subscription_name=sre_subscription_name,
                 tenant_id=self.config.azure.tenant_id,
             ),
+            # Private endpoints require the inline VNet subnets to finish updating.
+            # An invoke for a subnet ID alone does not establish this dependency.
+            opts=ResourceOptions(depends_on=[networking.virtual_network]),
             tags=self.tags,
         )
 
